@@ -10,7 +10,7 @@ namespace Streaming.Application.Account
 {
     public class AzureServiceBusService : IAzureServiceBusService
     {
-        private string ConnectionString = "Endpoint=sb://streaming-spotify.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=V3PuECVrHQpNwKQKkjw2lvqTBATXdWwRu+ASbEYTEms="; // String de conexão com o Azure Service Bus.
+        private string ConnectionString = "colocar a conexcao"; // String de conexão com o Azure Service Bus.
 
         public AzureServiceBusService() { } // Construtor padrão.
 
