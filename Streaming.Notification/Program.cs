@@ -37,6 +37,3 @@ Task ErrorHandler(ProcessErrorEventArgs args)
     Console.WriteLine(args.Exception.ToString());
     return Task.CompletedTask;
 }
-
-
-
