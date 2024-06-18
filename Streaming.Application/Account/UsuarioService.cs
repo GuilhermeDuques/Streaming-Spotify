@@ -14,17 +14,21 @@ namespace Streaming.Application.Account
 {
     public class UsuarioService
     {
-        private UsuarioRepository usuarioRepository;
-        private PlanoRepository planoRepository;
-        private BandaRepository bandaRepository;
+        private IUsuarioRepository usuarioRepository;
+        private IPlanoRepository planoRepository;
+        private IBandaRepository bandaRepository;
+        private IAzureServiceBusService azureServiceBusService;
 
-        public UsuarioService(UsuarioRepository usuarioRepository, PlanoRepository planoRepository, BandaRepository bandaRepository)
+
+        public UsuarioService(IUsuarioRepository usuarioRepository, IPlanoRepository planoRepository, IBandaRepository bandaRepository, IAzureServiceBusService azureServiceBusService)
         {
             this.usuarioRepository = usuarioRepository;
             this.planoRepository = planoRepository;
             this.bandaRepository = bandaRepository;
+            this.azureServiceBusService = azureServiceBusService;
         }
 
+        // Cria uma nova conta de usuário com o nome fornecido, associada ao plano especificado e cartão de crédito.
         public Usuario CriarConta(String nome, Guid planoId, Cartao cartao)
         {
             Plano plano = this.planoRepository.GetPlanoById(planoId);
@@ -35,30 +39,27 @@ namespace Streaming.Application.Account
             Usuario usuario = new Usuario();
             usuario.Criar(nome, plano, cartao);
 
-
             this.usuarioRepository.Save(usuario);
 
             var notificacao = new Notificacao();
             notificacao.IdUsuario = usuario.Id;
             notificacao.Message = $"Seja bem vindo. Debitamos o valor de R$ {plano.Valor.ToString("N2")} no seu cartão";
 
-            AzureServiceBusService notificationService = new AzureServiceBusService();
-            notificationService.SendMessage(notificacao).Wait();
+            azureServiceBusService.SendMessage(notificacao).Wait();
 
             return usuario;
-
         }
 
+        // Obtém um usuário pelo ID fornecido.
         public Usuario Obter(Guid id)
         {
             var usuario = this.usuarioRepository.GetUsuario(id);
             return usuario;
         }
 
+        // Favorita uma música para um usuário específico.
         public void FavoritarMusica(Guid id, Guid idMusica)
         {
-
-
             var usuario = this.usuarioRepository.GetUsuario(id);
             if (usuario == null) throw new Exception("Não encontrei o usuario");
 
@@ -67,10 +68,9 @@ namespace Streaming.Application.Account
             usuario.FavoritarMusica(musica);
 
             this.usuarioRepository.Update(usuario);
-
         }
 
-
+        // Remove uma música dos favoritos de um usuário específico.
         public void DesfavoritarMusica(Guid id, Guid idMusica)
         {
             var usuario = this.usuarioRepository.GetUsuario(id);
@@ -83,9 +83,9 @@ namespace Streaming.Application.Account
             this.usuarioRepository.Update(usuario);
         }
 
+        // Verifica se uma música existe e a retorna pelo ID fornecido.
         private Musica VerificarMusica(Guid idMusica)
         {
-
             var musica = this.bandaRepository.GetMusica(idMusica);
 
             if (musica == null) throw new Exception("Não encontrei a musica a ser favoritada");
@@ -94,3 +94,4 @@ namespace Streaming.Application.Account
         }
     }
 }
+

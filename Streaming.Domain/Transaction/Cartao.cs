@@ -9,7 +9,6 @@ namespace Streaming.Domain.Transaction
 {
     public class Cartao
     {
-
         private const int TRANSACTION_TIME_INTERVAL = -2;
         private const int TRANSACTION_MERCHANT_REPEAT = 1;
 
@@ -19,6 +18,7 @@ namespace Streaming.Domain.Transaction
         public String Numero { get; set; }
         public List<Transacao> Transacoes { get; set; } = new List<Transacao>();
 
+        // Cria uma nova transação associada a este cartão.
         public void CriarTransacao(string merchant, decimal valor, string descricao)
         {
             CartaoException validationErrors = new CartaoException();
@@ -41,10 +41,10 @@ namespace Streaming.Domain.Transaction
 
             this.Limite = this.Limite - transacao.Valor;
 
-                this.Transacoes.Add(transacao);
-
+            this.Transacoes.Add(transacao);
         }
 
+        // Verifica se o cartão está ativo.
         private void IsCartaoAtivo(CartaoException validationErrors)
         {
             if (this.Ativo == false)
@@ -57,6 +57,7 @@ namespace Streaming.Domain.Transaction
             }
         }
 
+        // Verifica se há limite disponível para a transação.
         private void VerificarLimiteDisponivel(Transacao transacao, CartaoException validationErrors)
         {
             if (transacao.Valor > this.Limite)
@@ -67,9 +68,9 @@ namespace Streaming.Domain.Transaction
                     ErrorName = nameof(Cartao)
                 });
             }
-
         }
 
+        // Valida a transação em relação a regras específicas do cartão.
         private void ValidarTransacao(Transacao transacao, CartaoException validationErrors)
         {
             var ultimasTransacao = this.Transacoes.Where(x => x.DtTransacao >= DateTime.Now.AddMinutes(TRANSACTION_TIME_INTERVAL));
@@ -94,8 +95,6 @@ namespace Streaming.Domain.Transaction
                     ErrorName = nameof(Cartao)
                 });
             }
-
         }
-
     }
 }

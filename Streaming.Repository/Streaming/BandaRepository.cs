@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace Streaming.Repository.Streaming
 {
-    public class BandaRepository
+    public class BandaRepository : IBandaRepository
     {
         private readonly IHttpClientFactory _httpClientFactory = null;
         private int retries = 1;

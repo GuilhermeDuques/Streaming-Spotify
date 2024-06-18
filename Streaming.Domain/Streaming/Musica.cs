@@ -17,7 +17,6 @@ namespace Streaming.Domain.Streaming
 
 
         [JsonPropertyName("duracao")]
-        //Todo: CORRIGIR!!!
         public int Duracao { get; set; }
 
     }

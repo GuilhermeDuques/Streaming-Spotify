@@ -14,12 +14,11 @@ namespace Streaming.API.Controllers
     {
         private UsuarioService service;
 
-        public UsuarioController(UsuarioService service)
-        {
-            this.service = service;
-        }
+        public UsuarioController(UsuarioService service) { this.service = service; }
 
         [HttpPost]
+        [ProducesResponseType(201)]
+        // Cria um novo usuário com base nos dados fornecidos.
         public IActionResult Criar(CriarUsuarioRequest request)
         {
             if (ModelState.IsValid == false) return BadRequest();
@@ -34,11 +33,11 @@ namespace Streaming.API.Controllers
             var usuarioCriado = this.service.CriarConta(request.Nome, request.PlanoId, cartao);
             UsuarioResponse response = UsuarioParaResponse(usuarioCriado);
 
-            return Created($"/usuario/{response.Id}", response);
 
+            return Created($"/usuario/{response.Id}", response);
         }
 
-        [HttpGet("{id}")]
+        [HttpGet("{id}")] // Obtém os detalhes de um usuário específico.
         public IActionResult Obter(Guid id)
         {
             var usuario = this.service.Obter(id);
@@ -49,10 +48,10 @@ namespace Streaming.API.Controllers
             var response = UsuarioParaResponse(usuario);
 
             return Ok(response);
-
         }
 
-        [HttpPost("{id}/favoritar/{idMusica}")]
+        [HttpPost("{id}/favoritar/{idMusica}")] // Favorita uma música para um usuário.
+        [ProducesResponseType(201)]
         public IActionResult FavoritarMusica(Guid id, Guid idMusica)
         {
             this.service.FavoritarMusica(id, idMusica);
@@ -64,7 +63,8 @@ namespace Streaming.API.Controllers
             return Ok(response);
         }
 
-        [HttpPost("{id}/desfavoritar/{idMusica}")]
+        [HttpPost("{id}/desfavoritar/{idMusica}")] // Remove uma música dos favoritos de um usuário.
+        [ProducesResponseType(201)]
         public IActionResult DesfavoritarMusica(Guid id, Guid idMusica)
         {
             this.service.DesfavoritarMusica(id, idMusica);
@@ -76,7 +76,7 @@ namespace Streaming.API.Controllers
             return Ok(response);
         }
 
-        private UsuarioResponse UsuarioParaResponse(Usuario usuarioCriado)
+        private UsuarioResponse UsuarioParaResponse(Usuario usuarioCriado) // Converte um objeto Usuario em um objeto UsuarioResponse.
         {
             var response = new UsuarioResponse()
             {
@@ -105,6 +105,5 @@ namespace Streaming.API.Controllers
 
             return response;
         }
-
     }
 }

@@ -2,7 +2,7 @@
 
 using Azure.Messaging.ServiceBus;
 
-string ConnectionString = "";
+string ConnectionString = "colocar seu link";
 
 ServiceBusClient client;
 ServiceBusProcessor processor;
@@ -38,5 +38,5 @@ Task ErrorHandler(ProcessErrorEventArgs args)
     return Task.CompletedTask;
 }
 
-//Endpoint=sb://streaming-spotify.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=V3PuECVrHQpNwKQKkjw2lvqTBATXdWwRu+ASbEYTEms=
+
 

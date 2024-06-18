@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Streaming.Repository.Account
 {
-    public class UsuarioRepository
+    public class UsuarioRepository : IUsuarioRepository
     {
         private static List<Usuario> Usuarios { get; set; } = new List<Usuario>();
 

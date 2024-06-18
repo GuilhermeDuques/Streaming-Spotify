@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace Streaming.Repository.Transaction
 {
-    public class PlanoRepository
+    public class PlanoRepository : IPlanoRepository
     {
         private StreamingContext streamingContext;
 
