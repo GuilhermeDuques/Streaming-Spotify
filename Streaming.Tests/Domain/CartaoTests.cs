@@ -4,14 +4,13 @@ using Streaming.Domain.Core;
 using System;
 using Xunit;
 
-namespace Streaming.Tests
+namespace Streaming.Tests.Domain
 {
     public class CartaoTests
     {
         [Fact]
         public void CriarTransacao_CartaoInativo_DeveLancarExcecao()
         {
-            // Arrange
             var cartao = new Cartao
             {
                 Ativo = false,
@@ -19,7 +18,6 @@ namespace Streaming.Tests
                 Numero = "1234 5678 9012 3456"
             };
 
-            // Act & Assert
             var exception = Assert.Throws<CartaoException>(() => cartao.CriarTransacao("Loja 1", 100m, "Compra 1"));
             Assert.Contains(exception.Errors, e => e.ErrorDescription == "Cartão não está ativo");
         }
@@ -27,7 +25,6 @@ namespace Streaming.Tests
         [Fact]
         public void CriarTransacao_LimiteInsuficiente_DeveLancarExcecao()
         {
-            // Arrange
             var cartao = new Cartao
             {
                 Ativo = true,
@@ -35,7 +32,6 @@ namespace Streaming.Tests
                 Numero = "1234 5678 9012 3456"
             };
 
-            // Act & Assert
             var exception = Assert.Throws<CartaoException>(() => cartao.CriarTransacao("Loja 1", 100m, "Compra 1"));
             Assert.Contains(exception.Errors, e => e.ErrorDescription == "Cartão não possui limite para esta transação");
         }
@@ -43,7 +39,6 @@ namespace Streaming.Tests
         [Fact]
         public void CriarTransacao_TransacoesFrequentes_DeveLancarExcecao()
         {
-            // Arrange
             var cartao = new Cartao
             {
                 Ativo = true,
@@ -55,7 +50,6 @@ namespace Streaming.Tests
             cartao.Transacoes.Add(new Transacao { DtTransacao = DateTime.Now.AddMinutes(-1) });
             cartao.Transacoes.Add(new Transacao { DtTransacao = DateTime.Now.AddMinutes(-1) });
 
-            // Act & Assert
             var exception = Assert.Throws<CartaoException>(() => cartao.CriarTransacao("Loja 1", 100m, "Compra 1"));
             Assert.Contains(exception.Errors, e => e.ErrorDescription == "Cartão utilizado muitas vezes em um período curto");
         }
@@ -63,7 +57,6 @@ namespace Streaming.Tests
         [Fact]
         public void CriarTransacao_TransacaoDuplicada_DeveLancarExcecao()
         {
-            // Arrange
             var cartao = new Cartao
             {
                 Ativo = true,
@@ -73,7 +66,6 @@ namespace Streaming.Tests
 
             cartao.Transacoes.Add(new Transacao { DtTransacao = DateTime.Now.AddMinutes(-1), Merchant = "Loja 1", Valor = 100m });
 
-            // Act & Assert
             var exception = Assert.Throws<CartaoException>(() => cartao.CriarTransacao("Loja 1", 100m, "Compra 1"));
             Assert.Contains(exception.Errors, e => e.ErrorDescription == "Transação duplicada para o mesmo cartão e mesmo merchant");
         }
@@ -81,7 +73,6 @@ namespace Streaming.Tests
         [Fact]
         public void CriarTransacao_TransacaoValida_DeveAdicionarTransacao()
         {
-            // Arrange
             var cartao = new Cartao
             {
                 Ativo = true,
@@ -89,10 +80,8 @@ namespace Streaming.Tests
                 Numero = "1234 5678 9012 3456"
             };
 
-            // Act
             cartao.CriarTransacao("Loja 1", 100m, "Compra 1");
 
-            // Assert
             Assert.Single(cartao.Transacoes);
             Assert.Equal(900m, cartao.Limite);
         }

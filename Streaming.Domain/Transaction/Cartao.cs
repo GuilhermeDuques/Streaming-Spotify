@@ -1,9 +1,8 @@
 ﻿using Streaming.Domain.Transaction.Exceptions;
+using Streaming.Domain.Core;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace Streaming.Domain.Transaction
 {
@@ -18,18 +17,19 @@ namespace Streaming.Domain.Transaction
         public String Numero { get; set; }
         public List<Transacao> Transacoes { get; set; } = new List<Transacao>();
 
-        // Cria uma nova transação associada a este cartão.
         public void CriarTransacao(string merchant, decimal valor, string descricao)
         {
             CartaoException validationErrors = new CartaoException();
 
             this.IsCartaoAtivo(validationErrors);
 
-            Transacao transacao = new Transacao();
-            transacao.Merchant = merchant;
-            transacao.Valor = valor;
-            transacao.Descricao = descricao;
-            transacao.DtTransacao = DateTime.Now;
+            Transacao transacao = new Transacao
+            {
+                Merchant = merchant,
+                Valor = valor,
+                Descricao = descricao,
+                DtTransacao = DateTime.Now
+            };
 
             this.VerificarLimiteDisponivel(transacao, validationErrors);
 
@@ -38,18 +38,15 @@ namespace Streaming.Domain.Transaction
             validationErrors.ValidateAndThrow();
 
             transacao.Id = Guid.NewGuid();
-
-            this.Limite = this.Limite - transacao.Valor;
-
+            this.Limite -= transacao.Valor;
             this.Transacoes.Add(transacao);
         }
 
-        // Verifica se o cartão está ativo.
         private void IsCartaoAtivo(CartaoException validationErrors)
         {
-            if (this.Ativo == false)
+            if (!this.Ativo)
             {
-                validationErrors.AddError(new Core.BusinessValidation()
+                validationErrors.AddError(new BusinessValidation
                 {
                     ErrorDescription = "Cartão não está ativo",
                     ErrorName = nameof(Cartao)
@@ -57,12 +54,11 @@ namespace Streaming.Domain.Transaction
             }
         }
 
-        // Verifica se há limite disponível para a transação.
         private void VerificarLimiteDisponivel(Transacao transacao, CartaoException validationErrors)
         {
             if (transacao.Valor > this.Limite)
             {
-                validationErrors.AddError(new Core.BusinessValidation()
+                validationErrors.AddError(new BusinessValidation
                 {
                     ErrorDescription = "Cartão não possui limite para esta transação",
                     ErrorName = nameof(Cartao)
@@ -70,26 +66,24 @@ namespace Streaming.Domain.Transaction
             }
         }
 
-        // Valida a transação em relação a regras específicas do cartão.
         private void ValidarTransacao(Transacao transacao, CartaoException validationErrors)
         {
-            var ultimasTransacao = this.Transacoes.Where(x => x.DtTransacao >= DateTime.Now.AddMinutes(TRANSACTION_TIME_INTERVAL));
+            var ultimasTransacao = this.Transacoes.Where(x => x.DtTransacao >= DateTime.Now.AddMinutes(TRANSACTION_TIME_INTERVAL)).ToList();
 
-            if (ultimasTransacao?.Count() >= 3)
+            if (ultimasTransacao.Count >= 3)
             {
-                validationErrors.AddError(new Core.BusinessValidation()
+                validationErrors.AddError(new BusinessValidation
                 {
                     ErrorDescription = "Cartão utilizado muitas vezes em um período curto",
                     ErrorName = nameof(Cartao)
                 });
             }
 
-            var transacaoMerchantRepetida = ultimasTransacao.Where(x => x.Merchant.ToUpper() == transacao.Merchant.ToUpper()
-                                                                   && x.Valor == transacao.Valor).Count() == TRANSACTION_MERCHANT_REPEAT;
+            bool transacaoMerchantRepetida = ultimasTransacao.Any(x => x.Merchant.ToUpper() == transacao.Merchant.ToUpper() && x.Valor == transacao.Valor);
 
             if (transacaoMerchantRepetida)
             {
-                validationErrors.AddError(new Core.BusinessValidation()
+                validationErrors.AddError(new BusinessValidation
                 {
                     ErrorDescription = "Transação duplicada para o mesmo cartão e mesmo merchant",
                     ErrorName = nameof(Cartao)
