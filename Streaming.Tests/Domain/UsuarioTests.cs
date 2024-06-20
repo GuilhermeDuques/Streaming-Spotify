@@ -1,11 +1,10 @@
 ﻿using Streaming.Domain.Account;
-using Streaming.Domain.Transaction.Exceptions;
+using Streaming.Domain.Streaming;
 using Streaming.Domain.Transaction;
+using Streaming.Domain.Transaction.Exceptions;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using Xunit;
-using Streaming.Domain.Streaming;
 
 namespace Streaming.Tests.Domain
 {
@@ -14,20 +13,24 @@ namespace Streaming.Tests.Domain
         [Fact]
         public void DeveCriarUmUsuarioComSucesso()
         {
-            //AAA -> Arrange, Act, Assert
+            // Arrange
+            Cartao cartao = new Cartao
+            {
+                Ativo = true,
+                Numero = "564654654",
+                Limite = 1000
+            };
 
-            Cartao cartao = new Cartao();
-            cartao.Ativo = true;
-            cartao.Numero = "564654654";
-            cartao.Limite = 1000;
-
-            Plano plano = new Plano();
-            plano.Valor = 29.0M;
-            plano.Nome = "Plano Lorem Ipsum";
+            Plano plano = new Plano
+            {
+                Valor = 29.0M,
+                Nome = "Plano Lorem Ipsum"
+            };
 
             var usuario = new Usuario();
             usuario.Criar("Lorem ipsum", plano, cartao);
 
+            // Assert
             Assert.NotNull(usuario);
             Assert.True(usuario.Playlists.Any());
             Assert.True(usuario.Playlists.First().Nome == "Favoritas");
@@ -39,14 +42,18 @@ namespace Streaming.Tests.Domain
         [Fact]
         public void NaoDeveCriarUsuarioCasoLimiteCartaoForMenorValorPlano()
         {
-            Cartao cartao = new Cartao();
-            cartao.Ativo = true;
-            cartao.Numero = "564654654";
-            cartao.Limite = 20;
+            Cartao cartao = new Cartao
+            {
+                Ativo = true,
+                Numero = "564654654",
+                Limite = 20
+            };
 
-            Plano plano = new Plano();
-            plano.Valor = 29.0M;
-            plano.Nome = "Plano Lorem Ipsum";
+            Plano plano = new Plano
+            {
+                Valor = 29.0M,
+                Nome = "Plano Lorem Ipsum"
+            };
 
             Assert.Throws<CartaoException>(() =>
             {
@@ -58,20 +65,60 @@ namespace Streaming.Tests.Domain
         [Fact]
         public void NaoDeveCriarUsuarioCasoCartaoEstejaInativo()
         {
-            Cartao cartao = new Cartao();
-            cartao.Ativo = false;
-            cartao.Numero = "564654654";
-            cartao.Limite = 1000;
+            Cartao cartao = new Cartao
+            {
+                Ativo = false,
+                Numero = "564654654",
+                Limite = 1000
+            };
 
-            Plano plano = new Plano();
-            plano.Valor = 29.0M;
-            plano.Nome = "Plano Lorem Ipsum";
+            Plano plano = new Plano
+            {
+                Valor = 29.0M,
+                Nome = "Plano Lorem Ipsum"
+            };
 
             Assert.Throws<CartaoException>(() =>
             {
                 var usuario = new Usuario();
                 usuario.Criar("Lorem ipsum", plano, cartao);
             });
+        }
+
+        [Fact]
+        public void AssinarPlano_DeveDesativarPlanoAtivo()
+        {
+            // Arrange
+            var usuario = new Usuario();
+            var plano1 = new Plano { Nome = "Plano 1", Valor = 29.0M };
+            var plano2 = new Plano { Nome = "Plano 2", Valor = 39.0M };
+            var cartao = new Cartao { Ativo = true, Numero = "123456789", Limite = 1000 };
+
+            usuario.Criar("Usuario Teste", plano1, cartao);
+
+            // Act
+            usuario.AssinarPlano(plano2, cartao);
+
+            // Assert
+            Assert.Equal(2, usuario.Assinaturas.Count);
+            Assert.False(usuario.Assinaturas.First().Ativo);
+            Assert.True(usuario.Assinaturas.Last().Ativo);
+        }
+
+        [Fact]
+        public void AssinarPlano_DeveAdicionarPlanoQuandoNaoExistemPlanosAtivos()
+        {
+            // Arrange
+            var usuario = new Usuario();
+            var plano = new Plano { Nome = "Plano Teste", Valor = 29.0M };
+            var cartao = new Cartao { Ativo = true, Numero = "123456789", Limite = 1000 };
+
+            // Act
+            usuario.AssinarPlano(plano, cartao);
+
+            // Assert
+            Assert.Single(usuario.Assinaturas);
+            Assert.True(usuario.Assinaturas.First().Ativo);
         }
 
         [Fact]

@@ -38,9 +38,11 @@ namespace Streaming.Domain.Account
             this.Cartoes.Add(cartao);
         }
 
-        private void AssinarPlano(Plano plano, Cartao cartao)
+        // Altere o nível de acesso de private para internal
+        public void AssinarPlano(Plano plano, Cartao cartao)
         {
             cartao.CriarTransacao(plano.Nome, plano.Valor, plano.Descricao);
+
             if (this.Assinaturas.Any(x => x.Ativo))
             {
                 var planoAtivo = this.Assinaturas.FirstOrDefault(x => x.Ativo);
@@ -49,6 +51,7 @@ namespace Streaming.Domain.Account
                     planoAtivo.Ativo = false;
                 }
             }
+
             this.Assinaturas.Add(new Assinatura()
             {
                 Ativo = true,
