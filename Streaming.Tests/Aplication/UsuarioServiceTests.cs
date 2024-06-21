@@ -1,17 +1,17 @@
 ﻿using Moq;
 using Streaming.Application.Account;
 using Streaming.Domain.Account;
+using Streaming.Domain.Streaming;
 using Streaming.Domain.Transaction;
 using Streaming.Repository.Account;
 using Streaming.Repository.Streaming;
 using Streaming.Repository.Transaction;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
+using Xunit;
 
-namespace Streaming.Tests.Aplication
+namespace Streaming.Tests.Application
 {
     public class UsuarioServiceTests
     {
@@ -23,7 +23,7 @@ namespace Streaming.Tests.Aplication
             Mock<IBandaRepository> mockBandaRepository = new Mock<IBandaRepository>();
             Mock<IAzureServiceBusService> mockAzureServiceBus = new Mock<IAzureServiceBusService>();
 
-            mockPlano.Setup(x => x.GetPlanoById(It.IsAny<Guid>())).Returns(new Streaming.Domain.Transaction.Plano()
+            mockPlano.Setup(x => x.GetPlanoById(It.IsAny<Guid>())).Returns(new Plano()
             {
                 Nome = "Plano Dummy",
                 Valor = 29M
@@ -34,10 +34,7 @@ namespace Streaming.Tests.Aplication
 
             UsuarioService usuarioService = new UsuarioService(mockUsuarioRepository.Object, mockPlano.Object, mockBandaRepository.Object, mockAzureServiceBus.Object);
 
-            Cartao cartao = new Cartao();
-            cartao.Ativo = true;
-            cartao.Numero = "564654654";
-            cartao.Limite = 1000;
+            Cartao cartao = new Cartao { Ativo = true, Numero = "564654654", Limite = 1000 };
 
             var usuario = usuarioService.CriarConta("Usuario Dummy", Guid.NewGuid(), cartao);
 
@@ -47,8 +44,87 @@ namespace Streaming.Tests.Aplication
             Assert.True(usuario.Cartoes.Count == 1);
             Assert.True(usuario.Assinaturas.Count == 1);
             Assert.True(usuario.Assinaturas.First().Plano.Nome == "Plano Dummy");
+        }
 
+        [Fact]
+        public void CriarConta_DeveLancarExcecao_QuandoPlanoNaoEncontrado()
+        {
+            Mock<IPlanoRepository> mockPlano = new Mock<IPlanoRepository>();
+            Mock<IUsuarioRepository> mockUsuarioRepository = new Mock<IUsuarioRepository>();
+            Mock<IBandaRepository> mockBandaRepository = new Mock<IBandaRepository>();
+            Mock<IAzureServiceBusService> mockAzureServiceBus = new Mock<IAzureServiceBusService>();
 
+            mockPlano.Setup(x => x.GetPlanoById(It.IsAny<Guid>())).Returns((Plano)null);
+
+            UsuarioService usuarioService = new UsuarioService(mockUsuarioRepository.Object, mockPlano.Object, mockBandaRepository.Object, mockAzureServiceBus.Object);
+
+            Cartao cartao = new Cartao { Ativo = true, Numero = "564654654", Limite = 1000 };
+
+            Assert.Throws<Exception>(() => usuarioService.CriarConta("Usuario Dummy", Guid.NewGuid(), cartao));
+        }
+
+        [Fact]
+        public void FavoritarMusica_DeveLancarExcecao_QuandoUsuarioNaoEncontrado()
+        {
+            Mock<IUsuarioRepository> mockUsuarioRepository = new Mock<IUsuarioRepository>();
+            Mock<IBandaRepository> mockBandaRepository = new Mock<IBandaRepository>();
+            Mock<IPlanoRepository> mockPlano = new Mock<IPlanoRepository>();
+            Mock<IAzureServiceBusService> mockAzureServiceBus = new Mock<IAzureServiceBusService>();
+
+            mockUsuarioRepository.Setup(x => x.GetUsuario(It.IsAny<Guid>())).Returns((Usuario)null);
+
+            UsuarioService usuarioService = new UsuarioService(mockUsuarioRepository.Object, mockPlano.Object, mockBandaRepository.Object, mockAzureServiceBus.Object);
+
+            Assert.Throws<Exception>(() => usuarioService.FavoritarMusica(Guid.NewGuid(), Guid.NewGuid()));
+        }
+
+        [Fact]
+        public void FavoritarMusica_DeveLancarExcecao_QuandoMusicaNaoEncontrada()
+        {
+            Mock<IUsuarioRepository> mockUsuarioRepository = new Mock<IUsuarioRepository>();
+            Mock<IBandaRepository> mockBandaRepository = new Mock<IBandaRepository>();
+            Mock<IPlanoRepository> mockPlano = new Mock<IPlanoRepository>();
+            Mock<IAzureServiceBusService> mockAzureServiceBus = new Mock<IAzureServiceBusService>();
+
+            var usuario = new Usuario();
+            mockUsuarioRepository.Setup(x => x.GetUsuario(It.IsAny<Guid>())).Returns(usuario);
+            mockBandaRepository.Setup(x => x.GetMusica(It.IsAny<Guid>())).Returns((Musica)null);
+
+            UsuarioService usuarioService = new UsuarioService(mockUsuarioRepository.Object, mockPlano.Object, mockBandaRepository.Object, mockAzureServiceBus.Object);
+
+            Assert.Throws<Exception>(() => usuarioService.FavoritarMusica(Guid.NewGuid(), Guid.NewGuid()));
+        }
+
+        [Fact]
+        public void DesfavoritarMusica_DeveLancarExcecao_QuandoUsuarioNaoEncontrado()
+        {
+            Mock<IUsuarioRepository> mockUsuarioRepository = new Mock<IUsuarioRepository>();
+            Mock<IBandaRepository> mockBandaRepository = new Mock<IBandaRepository>();
+            Mock<IPlanoRepository> mockPlano = new Mock<IPlanoRepository>();
+            Mock<IAzureServiceBusService> mockAzureServiceBus = new Mock<IAzureServiceBusService>();
+
+            mockUsuarioRepository.Setup(x => x.GetUsuario(It.IsAny<Guid>())).Returns((Usuario)null);
+
+            UsuarioService usuarioService = new UsuarioService(mockUsuarioRepository.Object, mockPlano.Object, mockBandaRepository.Object, mockAzureServiceBus.Object);
+
+            Assert.Throws<Exception>(() => usuarioService.DesfavoritarMusica(Guid.NewGuid(), Guid.NewGuid()));
+        }
+
+        [Fact]
+        public void DesfavoritarMusica_DeveLancarExcecao_QuandoMusicaNaoEncontrada()
+        {
+            Mock<IUsuarioRepository> mockUsuarioRepository = new Mock<IUsuarioRepository>();
+            Mock<IBandaRepository> mockBandaRepository = new Mock<IBandaRepository>();
+            Mock<IPlanoRepository> mockPlano = new Mock<IPlanoRepository>();
+            Mock<IAzureServiceBusService> mockAzureServiceBus = new Mock<IAzureServiceBusService>();
+
+            var usuario = new Usuario();
+            mockUsuarioRepository.Setup(x => x.GetUsuario(It.IsAny<Guid>())).Returns(usuario);
+            mockBandaRepository.Setup(x => x.GetMusica(It.IsAny<Guid>())).Returns((Musica)null);
+
+            UsuarioService usuarioService = new UsuarioService(mockUsuarioRepository.Object, mockPlano.Object, mockBandaRepository.Object, mockAzureServiceBus.Object);
+
+            Assert.Throws<Exception>(() => usuarioService.DesfavoritarMusica(Guid.NewGuid(), Guid.NewGuid()));
         }
     }
 }
