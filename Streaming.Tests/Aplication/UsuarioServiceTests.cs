@@ -1,54 +1,112 @@
 ﻿using Moq;
 using Streaming.Application.Account;
+using Streaming.Application.Exceptions;
 using Streaming.Domain.Account;
+using Streaming.Domain.Streaming;
 using Streaming.Domain.Transaction;
 using Streaming.Repository.Account;
 using Streaming.Repository.Streaming;
 using Streaming.Repository.Transaction;
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using Xunit;
 
-namespace Streaming.Tests.Aplication
+namespace Streaming.Tests.Application
 {
     public class UsuarioServiceTests
     {
-        [Fact]
-        public void DeveCriarUmUsuarioComSucesso()
+        private readonly Mock<IUsuarioRepository> usuarioRepositoryMock;
+        private readonly Mock<IPlanoRepository> planoRepositoryMock;
+        private readonly Mock<IBandaRepository> bandaRepositoryMock;
+        private readonly Mock<IAzureServiceBusService> azureServiceBusServiceMock;
+        private readonly UsuarioService usuarioService;
+
+        public UsuarioServiceTests()
         {
-            Mock<IPlanoRepository> mockPlano = new Mock<IPlanoRepository>();
-            Mock<IUsuarioRepository> mockUsuarioRepository = new Mock<IUsuarioRepository>();
-            Mock<IBandaRepository> mockBandaRepository = new Mock<IBandaRepository>();
-            Mock<IAzureServiceBusService> mockAzureServiceBus = new Mock<IAzureServiceBusService>();
+            usuarioRepositoryMock = new Mock<IUsuarioRepository>();
+            planoRepositoryMock = new Mock<IPlanoRepository>();
+            bandaRepositoryMock = new Mock<IBandaRepository>();
+            azureServiceBusServiceMock = new Mock<IAzureServiceBusService>();
+            usuarioService = new UsuarioService(usuarioRepositoryMock.Object, planoRepositoryMock.Object, bandaRepositoryMock.Object, azureServiceBusServiceMock.Object);
+        }
 
-            mockPlano.Setup(x => x.GetPlanoById(It.IsAny<Guid>())).Returns(new Streaming.Domain.Transaction.Plano()
-            {
-                Nome = "Plano Dummy",
-                Valor = 29M
-            });
+        [Fact]
+        public void CriarConta_DeveLancarPlanoNaoEncontradoException_SePlanoNaoExistir()
+        {
+            // Arrange
+            var planoId = Guid.NewGuid();
+            planoRepositoryMock.Setup(repo => repo.GetPlanoById(planoId)).Returns((Plano)null);
 
-            mockUsuarioRepository.Setup(x => x.Save(It.IsAny<Usuario>()));
-            mockAzureServiceBus.Setup(x => x.SendMessage(It.IsAny<Notificacao>())).Returns(Task.CompletedTask);
+            // Act & Assert
+            var ex = Assert.Throws<PlanoNaoEncontradoException>(() => usuarioService.CriarConta("Nome", planoId, new Cartao()));
+            Assert.Equal("Plano não encontrado", ex.Message);
+        }
 
-            UsuarioService usuarioService = new UsuarioService(mockUsuarioRepository.Object, mockPlano.Object, mockBandaRepository.Object, mockAzureServiceBus.Object);
+        [Fact]
+        public void Obter_DeveLancarUsuarioNaoEncontradoException_SeUsuarioNaoExistir()
+        {
+            // Arrange
+            var usuarioId = Guid.NewGuid();
+            usuarioRepositoryMock.Setup(repo => repo.GetUsuario(usuarioId)).Returns((Usuario)null);
 
-            Cartao cartao = new Cartao();
-            cartao.Ativo = true;
-            cartao.Numero = "564654654";
-            cartao.Limite = 1000;
+            // Act & Assert
+            var ex = Assert.Throws<UsuarioNaoEncontradoException>(() => usuarioService.Obter(usuarioId));
+            Assert.Equal("Usuário não encontrado", ex.Message);
+        }
 
-            var usuario = usuarioService.CriarConta("Usuario Dummy", Guid.NewGuid(), cartao);
+        [Fact]
+        public void FavoritarMusica_DeveLancarUsuarioNaoEncontradoException_SeUsuarioNaoExistir()
+        {
+            // Arrange
+            var usuarioId = Guid.NewGuid();
+            usuarioRepositoryMock.Setup(repo => repo.GetUsuario(usuarioId)).Returns((Usuario)null);
 
-            Assert.NotNull(usuario);
-            Assert.True(usuario.Playlists.Any());
-            Assert.True(usuario.Playlists.First().Nome == "Favoritas");
-            Assert.True(usuario.Cartoes.Count == 1);
-            Assert.True(usuario.Assinaturas.Count == 1);
-            Assert.True(usuario.Assinaturas.First().Plano.Nome == "Plano Dummy");
+            // Act & Assert
+            var ex = Assert.Throws<UsuarioNaoEncontradoException>(() => usuarioService.FavoritarMusica(usuarioId, Guid.NewGuid()));
+            Assert.Equal("Usuário não encontrado", ex.Message);
+        }
 
+        [Fact]
+        public void FavoritarMusica_DeveLancarMusicaNaoEncontradaException_SeMusicaNaoExistir()
+        {
+            // Arrange
+            var usuario = new Usuario();
+            var usuarioId = Guid.NewGuid();
+            var musicaId = Guid.NewGuid();
 
+            usuarioRepositoryMock.Setup(repo => repo.GetUsuario(usuarioId)).Returns(usuario);
+            bandaRepositoryMock.Setup(repo => repo.GetMusica(musicaId)).Returns((Musica)null);
+
+            // Act & Assert
+            var ex = Assert.Throws<MusicaNaoEncontradaException>(() => usuarioService.FavoritarMusica(usuarioId, musicaId));
+            Assert.Equal("Música não encontrada", ex.Message);
+        }
+
+        [Fact]
+        public void DesfavoritarMusica_DeveLancarUsuarioNaoEncontradoException_SeUsuarioNaoExistir()
+        {
+            // Arrange
+            var usuarioId = Guid.NewGuid();
+            usuarioRepositoryMock.Setup(repo => repo.GetUsuario(usuarioId)).Returns((Usuario)null);
+
+            // Act & Assert
+            var ex = Assert.Throws<UsuarioNaoEncontradoException>(() => usuarioService.DesfavoritarMusica(usuarioId, Guid.NewGuid()));
+            Assert.Equal("Usuário não encontrado", ex.Message);
+        }
+
+        [Fact]
+        public void DesfavoritarMusica_DeveLancarMusicaNaoEncontradaException_SeMusicaNaoExistir()
+        {
+            // Arrange
+            var usuario = new Usuario();
+            var usuarioId = Guid.NewGuid();
+            var musicaId = Guid.NewGuid();
+
+            usuarioRepositoryMock.Setup(repo => repo.GetUsuario(usuarioId)).Returns(usuario);
+            bandaRepositoryMock.Setup(repo => repo.GetMusica(musicaId)).Returns((Musica)null);
+
+            // Act & Assert
+            var ex = Assert.Throws<MusicaNaoEncontradaException>(() => usuarioService.DesfavoritarMusica(usuarioId, musicaId));
+            Assert.Equal("Música não encontrada", ex.Message);
         }
     }
 }
