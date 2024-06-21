@@ -39,7 +39,7 @@ namespace Streaming.Tests.Domain
             var musica = new Musica { Id = Guid.NewGuid(), Nome = "Musica 1" };
 
             // Act
-            playlist.Musicas.Add(musica);
+            playlist.AdicionarMusica(musica);
 
             // Assert
             Assert.Single(playlist.Musicas);
@@ -53,10 +53,10 @@ namespace Streaming.Tests.Domain
             // Arrange
             var playlist = new Playlist();
             var musica = new Musica { Id = Guid.NewGuid(), Nome = "Musica 1" };
-            playlist.Musicas.Add(musica);
+            playlist.AdicionarMusica(musica);
 
             // Act
-            playlist.Musicas.Remove(musica);
+            playlist.RemoverMusica(musica);
 
             // Assert
             Assert.Empty(playlist.Musicas);
@@ -71,7 +71,7 @@ namespace Streaming.Tests.Domain
             var musica = new Musica { Id = Guid.NewGuid(), Nome = "Musica 1" };
 
             // Act & Assert
-            var exception = Assert.Throws<Exception>(() => playlist.Musicas.Remove(musica));
+            var exception = Assert.Throws<Exception>(() => playlist.RemoverMusica(musica));
             Assert.Equal("A música não está na playlist.", exception.Message);
         }
 
@@ -82,7 +82,7 @@ namespace Streaming.Tests.Domain
             // Arrange
             var playlist = new Playlist();
             var musica = new Musica { Id = Guid.NewGuid(), Nome = "Musica 1" };
-            playlist.Musicas.Add(musica);
+            playlist.AdicionarMusica(musica);
 
             // Act
             var contemMusica = playlist.Musicas.Contains(musica);

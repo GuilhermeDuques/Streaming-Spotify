@@ -1,11 +1,8 @@
-﻿using Streaming.Domain.Streaming;
+﻿using Streaming.Domain.Account;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
-namespace Streaming.Domain.Account
+namespace Streaming.Domain.Streaming
 {
     public class Playlist
     {
@@ -20,5 +17,18 @@ namespace Streaming.Domain.Account
             Musicas = new List<Musica>();
         }
 
+        public void AdicionarMusica(Musica musica)
+        {
+            Musicas.Add(musica);
+        }
+
+        public void RemoverMusica(Musica musica)
+        {
+            if (!Musicas.Contains(musica))
+            {
+                throw new Exception("A música não está na playlist.");
+            }
+            Musicas.Remove(musica);
+        }
     }
 }
