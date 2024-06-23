@@ -26,20 +26,20 @@ builder.Services.AddDbContext<StreamingContext>(c =>
     c.UseInMemoryDatabase("Streaming");
 });
 
-builder.Services.AddScoped<UsuarioRepository>();
-builder.Services.AddScoped<BandaRepository>();
-builder.Services.AddScoped<PlanoRepository>();
+builder.Services.AddScoped<IUsuarioRepository, UsuarioRepository>();
+builder.Services.AddScoped<IBandaRepository, BandaRepository>();
+builder.Services.AddScoped<IPlanoRepository, PlanoRepository>();
+builder.Services.AddScoped<IAzureServiceBusService, AzureServiceBusService>();
+
 
 builder.Services.AddScoped<UsuarioService>();
 
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+
+app.UseSwagger();
+app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
