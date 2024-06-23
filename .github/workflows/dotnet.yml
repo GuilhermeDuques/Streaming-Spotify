@@ -13,6 +13,10 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    
+    defaults:
+      run:
+        shell: bash    
 
     steps:
     - uses: actions/checkout@v4
@@ -26,3 +30,16 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Docker Login
+      uses: azure/docker-login@v1
+      with:
+        login-server: ${{secrets.REGISTRY_LOGIN_SERVER}}
+        username: ${{secrets.REGISTRY_USERNAME}}
+        password: ${{secrets.REGISTRY_PASSWORD}}
+    - name: Builder image and push
+      uses: docker/build-push-action@v5
+      with:
+        push: true
+        tags: ${{secrets.REGISTRY_LOGIN_SERVER}}/streaming:${{github.sha}}
+        file: Streaming.API/Dockerfile
+        context: .
